@@ -4571,12 +4571,20 @@ void Threads::deoptimized_wrt_marked_nmethods() {
 jlong Threads::compile_total_time_ms() {
   jlong accumulator = 0;
   MutexLocker mu(Threads_lock);
-  for (JavaThread* i = _thread_list; i != NULL; i = i->next()) {
+  jlong current_thread_count = 0;
+  for (JavaThread* i = _thread_list; i != NULL; i = i->next(), ++current_thread_count) {
     if (i->is_Compiler_thread()) {
       jlong time = os::thread_cpu_time((Thread *) i, true) / 1000 / 1000;
       accumulator += time;
     }
   }
+
+  static jlong previous_thread_count = current_thread_count;
+  assert(current_thread_count >= previous_thread_count, "thread count must not be less");
+
+  static jlong prev_returned_value = accumulator;
+  assert(prev_returned_value <= accumulator, "compile_total_time_ms should be greater than prev returned value");
+  prev_returned_value = accumulator;
   return accumulator;
 }
 
