@@ -4568,30 +4568,6 @@ void Threads::deoptimized_wrt_marked_nmethods() {
     p->deoptimized_wrt_marked_nmethods();
   }
 }
-jlong Threads::compile_total_time_ms() {
-  jlong accumulator = 0;
-  MutexLocker mu(Threads_lock);
-  static std::map<JavaThread*, jlong> thread_to_cputime;
-
-  jlong current_thread_count = 0;
-  for (JavaThread* i = _thread_list; i != NULL; i = i->next(), ++current_thread_count) {
-    if (i->is_Compiler_thread()) {
-      jlong time = os::thread_cpu_time((Thread *) i, true) / 1000 / 1000;
-      thread_to_cputime[i] = time;
-    }
-  }
-
-  static jlong previous_thread_count = current_thread_count;
-  printf("thread count must not be less %lu -> %lu\n", previous_thread_count, current_thread_count);
-
-  static jlong prev_returned_value = accumulator;
-  printf("compile_total_time_ms should be greater than prev returned value %lu %lu\n", prev_returned_value, accumulator);
-
-  previous_thread_count = current_thread_count;
-  prev_returned_value = accumulator;
-  return accumulator;
-}
-
 
 // Get count Java threads that are waiting to enter the specified monitor.
 GrowableArray<JavaThread*>* Threads::get_pending_threads(ThreadsList * t_list,
