@@ -306,7 +306,7 @@ static jobject sAccessibilityClass = NULL;
             newChild = [JavaTextAccessibility alloc];
         } else if ([nsRole isEqualToString:NSAccessibilityListRole]) {
             newChild = [JavaListAccessibility alloc];
-        } if ([nsRole isEqualToString:NSAccessibilityTableRole]) {
+        } else if ([nsRole isEqualToString:NSAccessibilityTableRole]) {
             newChild = [JavaTableAccessibility alloc];
         } else {
             newChild = [JavaComponentAccessibility alloc];

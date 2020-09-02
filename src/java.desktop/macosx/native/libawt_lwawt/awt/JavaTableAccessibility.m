@@ -19,14 +19,18 @@
 
 @implementation PlatformAxTable
 
-- (nullable NSArray<id<NSAccessibilityRow>> *)accessibilityRows {
-    NSArray *children = [super accessibilityChildren];
+- (NSArray *)accessibilityChildren {
+        NSArray *children = [super accessibilityChildren];
     if (children == NULL) {
         return NULL;
     }
-    JNIEnv *env = [ThreadUtilities getJNIEnv];
-    jmethodID methodId = (*env)->GetMethodID(env, (*env)->GetObjectClass(env, [[self javaBase] component]), "getRowCount", "()Ljava/lang/Integer;");
-    jint rowCount = (jint)(*env)->CallObjectMethod(env, [[self javaBase] component], methodId);
+     int rowCount = 0, y = 0;
+     for (id cell in children) {
+     if (y != [cell accessibilityFrame].origin.y) {
+     rowCount += 1;
+     y = [cell accessibilityFrame].origin.y;
+     }
+     }
     NSMutableArray *rows = [NSMutableArray arrayWithCapacity:rowCount];
     int k = 0, cellCount = [children count] / rowCount;
     for (int i = 0; i < rowCount; i++) {
@@ -35,21 +39,22 @@
         CGFloat width = 0;
         for (int j = 0; j < cellCount; j++) {
             [cells addObject:[children objectAtIndex:k]];
-            k += 1;
             width += [[children objectAtIndex:k] accessibilityFrame].size.width;
+            k += 1;
         }
         CGPoint point = [[cells objectAtIndex:0] accessibilityFrame].origin;
         CGFloat height = [[cells objectAtIndex:0] accessibilityFrame].size.height;
         NSAccessibilityElement *a11yRow = [NSAccessibilityElement accessibilityElementWithRole:NSAccessibilityRowRole frame:NSRectFromCGRect(CGRectMake(point.x, point.y, width, height)) label:a11yName parent:self];
         [a11yRow setAccessibilityChildren:cells];
-        for (JavaCellAccessibility *cell in cells) [cell setParent:a11yRow];
+        for (JavaCellAccessibility *cell in cells) [cell setAccessibilityParent:a11yRow];
         [rows addObject:a11yRow];
     }
-    (*env)->DeleteLocalRef(env, rowCount);
-    (*env)->DeleteLocalRef(env, methodId);
     return rows;
 }
 
+- (NSArray *)accessibilityRows {
+    return [self accessibilityChildren];
+}
 /*
 - (nullable NSArray<id<NSAccessibilityRow>> *)accessibilitySelectedRows {
     return [self accessibilitySelectedChildren];
@@ -74,5 +79,13 @@
 - (nullable NSArray *)accessibilityRowHeaderUIElements;
 - (nullable NSArray *)accessibilityColumnHeaderUIElements;
  */
+
+- (NSRect)accessibilityFrame {
+    return [super accessibilityFrame];
+}
+
+- (id)accessibilityParent {
+    return [super accessibilityParent];
+}
 
 @end
